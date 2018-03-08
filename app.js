@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 
 var fetch = require('fetch');
 var search = require('string-search');
+//var ocr = require('ocr');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -25,18 +26,82 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+app.get('/query', (req, res) => {
+    res.render('query', {answer: undefined});
+})
+app.post('/query', (req, res) => {
+    var body = req.body;
+    var question = body.question;
+    var a1 = body.a1;
+    var a2 = body.a2;
+    var a3 = body.a3;
+
+    var confidences = new Map;
+
+    //Get results for each one.
+
+    getAdjustedGoogleHits(question, a1, (num) => {
+       confidence = num;
+       confidences.set(1, confidence);
+       if(confidences.size == 3){
+           done();
+       }
+    });
+    getAdjustedGoogleHits(question, a2, (num) => {
+        confidence = num;
+        confidences.set(2, confidence);
+        if(confidences.size == 3){
+            done();
+        }
+    });
+    getAdjustedGoogleHits(question, a3, (num) => {
+        confidence = num;
+        confidences.set(3, confidence);
+        if(confidences.size == 3){
+            done();
+        }
+    });
+    function done(){
+        var confidencesArray = [...confidences.values()]
+        var winningIndex = confidencesArray.indexOf(Math.max(... confidences.values()));
+        var winningAnswer = [... confidences.keys()][winningIndex];
+        res.render('query', {answer: winningAnswer.toString()});
+    }
+})
+/*
+Get google result number of results
+ */
+
 app.get('/', (req, res) => {
-  fetch.fetchUrl('http://www.google.com/search?q=hello world', (error, meta, body) => {
-    var content = body.toString();
-    res.send(content.toString());
-    var search = 'id="resultStats">About ';
-    var index = (content.search(search));
-    var numberString = content.substr(index + search.length, 15);
-      numberString = numberString.replace(/\D/g,'');
-    console.dir(parseInt(numberString))
-  });
+    getNumGoogleHits(req.query.q, (numHits) => {
+        res.send(numHits)
+    })
 });
 
+function getAdjustedGoogleHits(question, answer, hits){
+    getNumGoogleHits(question + ' ' + answer, (numHits) => {
+       var totalHits = numHits;
+       getNumGoogleHits(answer, (numHits) => {
+          var baselineAnswerHits = numHits;
+          hits(totalHits / baselineAnswerHits);
+       });
+    });
+}
+function getNumGoogleHits(query, hits){
+    fetch.fetchUrl('http://www.google.com/search?q=' + query, (error, meta, body) => {
+        var content = body.toString();
+        var search = 'id="resultStats">About ';
+        var index = (content.search(search));
+        var numberString = content.substr(index + search.length, 15);
+        numberString = numberString.replace(/\D/g,'');
+        hits(numberString);
+    });
+}
+
+function ocrImage(imageName){
+
+}
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
