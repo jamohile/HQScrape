@@ -11,3 +11,8 @@ input{
   margin: 16px;
   width: 100%;
 }
+#answer{
+  padding: 8px;
+  background: deepskyblue;
+  color: white;
+}

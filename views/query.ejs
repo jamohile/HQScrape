@@ -4,10 +4,10 @@
 </head>
 
 <body>
-<%if(answer){%>
-<%=answer%>
-<%}%>
-<form action="query" method="post">
+<% if(answer){ %>
+<div id="answer"><%= answer %></div>
+<% } %>
+<form action="/" method="post">
     <input type="text" placeholder="Question" name="question">
 
     <input type="text" placeholder="Answer 1" name="a1">
