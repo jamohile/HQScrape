@@ -27,10 +27,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-app.get('/query', (req, res) => {
+app.get('/', (req, res) => {
     res.render('query', {answer: undefined});
 })
-app.post('/query', (req, res) => {
+app.post('/', (req, res) => {
     var body = req.body;
     var question = body.question;
     var a1 = body.a1;
